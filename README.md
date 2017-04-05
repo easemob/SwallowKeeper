@@ -34,8 +34,9 @@ This solution can apply to not just java language, also apply to python, ruby, p
  
    One script reads upstreams information from consul server and updates them into tengine memory with dyups api, and this will take effect in near real time without reloading tengine.
 
-##Install and Configure
- It's assumed consul cluster has been setup in your environment.
+## Install and Configure
+ 
+ It's assumed consul cluster has been setup successfully in your environment and services are already registered.
 
   ```
    1. Build tengine with dyups and install it
