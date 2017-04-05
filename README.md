@@ -34,86 +34,36 @@ This solution can apply to not just java language, also apply to python, ruby, p
  
    One script reads upstreams information from consul server and updates them into tengine memory with dyups api, and this will take effect in near real time without reloading tengine.
 
-### Build tengine rpm package with dyups and luajit module
- (dyups is to support autoscale and luajit is to support blue/green deployment)
- 
- * Install dependence
-   ```
-     sudo yum install -y pcre-devel GeoIP-devel openssl openssl-devel pcre
-   ```
- * Configure tengine 2.1.2 installation environment 
-   After downloading tengine 2.1.2 source code, run
-
-   ```
-     ./configure --with-http_geoip_module --with-http_lua_module  --with-syslog
-     --with-http_ssl_module --with-http_realip_module
-     --with-http_addition_module --with-http_sub_module --with-http_dav_module
-     --with-http_flv_module --with-http_mp4_module --with-http_gunzip_module
-     --with-http_gzip_static_module --with-http_random_index_module
-     --with-http_secure_link_module --with-http_stub_status_module
-     --with-file-aio --with-cc-opt='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2
-     -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64
-     -mtune=generic' --without-mail_pop3_module --without-mail_imap_module
-     --without-mail_smtp_module --prefix=/home/dyups/apps/opt/nginx
-     --conf-path=/home/dyups/apps/config/nginx/nginx.conf --user=dyups
-     --group=dyups --pid-path=/home/dyups/apps/var/nginx/nginx.pid
-     --error-log-path=/home/dyups/apps/log/nginx/error.log
-     --http-log-path=/home/dyups/apps/log/nginx/access.log
-     --sbin-path=/home/dyups/apps/opt/nginx/sbin/nginx
-     --lock-path=/home/dyups/apps/var/nginx/nginx.lock
-     --http-client-body-temp-path=/home/dyups/apps/var/nginx/client_temp
-     --http-proxy-temp-path=/home/dyups/apps/var/nginx/proxy_temp
-     --http-fastcgi-temp-path=/home/dyups/apps/var/nginx/fastcgi_temp
-     --http-uwsgi-temp-path=/home/dyups/apps/var/nginx/uwsgi_temp
-     --http-scgi-temp-path=/home/dyups/apps/var/nginx/scgi_temp
-     --with-http_dyups_module --with-http_dyups_lua_api --with-http_lua_module
-   ```
- * Install tengine
-   ```
-    make && sudo make install DESTDIR=/tmp/tegine_install  
-   ```
- * Use fpm build tengine rpm
+##Install and Configure
+ It's assumed consul cluster has been setup in your environment.
 
   ```
-     fpm -s dir -f -t rpm -n tengine  --epoch 0 -v '2.1.2' --verbose \
-    -d 'luajit' \
-    -d 'libpng-devel' \
-    -d 'pcre' \
-    -d 'pcre-devel' \
-    -d 'openssl' \
-    -d 'openssl-devel' \
-    -d 'GeoIP-devel' \
-    -d 'pcre-devel' \
-    --description 'tengine 2.1.2 compiled with dyups' --url 'www.dyups.com' --license 'BSD' \
-    --after-install /home/dyups/apps/opt/nginx/link_luajit_so.sh \
-    -C /tmp/tegine_install . 
-  ``` 
-  
-  ```
-  link_luajit_so.sh, this script is used to configure the lugjit environment, if blue/green deployment is not used, the option "--after-install" can be removed.
-  link_luajit_so.sh content:
-		echo 'export LUAJIT_LIB=/usr/local/lib/' >>/etc/profile;
-		echo 'export LUAJIT_INC=/usr/local/include/luajit-2.0' >>/etc/profile;
-		source /etc/profile;
-		ln -s /usr/local/lib/libluajit-5.1.so.2 /lib64/libluajit-5.1.so.2;
-  ```
-  * Install tengine-2.1.2 rpm gengerated by fpm
-
-  ```
-    yum install -y tengine-2.1.2.rpm
-
-  ```
-
-###   Change tengine config files about dyups module, refer to the example indyups_config folder
-
-  ```
-    server {
+   1. Build tengine with dyups and install it
+   
+   2. configure dyups configs in tengine
+      
+       server {
         listen  127.0.0.1:18882;
         location / {
             dyups_interface; # Define the dyups api interface
         }
-    }
+       }
+      
+      Reference: https://github.com/yzprofile/ngx_http_dyups_module
+ 
+   3. Install consul agent on tengine server so that script update_nginx_upstream.py can fetch all services information registered in consul via it.
+   
+   4. Change variables in scripts/update_nginx_upstream.py 
+   
+      eg:
+         # NGINX_DYUPS_ADDR: Define dyups management url, it's configured on the same host with nginx
+         NGINX_DYUPS_ADDR = "http://127.0.0.1:18882"
+         
+         #UPSTREAM_FILE: Define upstream config file to persist servers information from consul server, this config file will be updated
+         # automatically once any service status changes or after LONG_POLLING_INTERVAL time
+        UPSTREAM_FILE = "/home/dyups/apps/config/nginx/conf.d/dyups.upstream.com.conf"
+        
+        
+  5. Run script update_nginx_upstream.py with supervisor
+ 
   ```
-
-### After reloading dyups config change in tengine, copy scripts/update_nginx_upstream.py to tengine server and use supervisor to manage this script. 
-   This will sync the consul services and persist them into conf.d/dyups.consul.upstream.conf.

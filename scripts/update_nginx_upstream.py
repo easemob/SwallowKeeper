@@ -26,7 +26,7 @@ NGINX_UPSTREAM_DETAIL = NGINX_DYUPS_ADDR + '/' + 'detail'
 
 # UPSTREAM_FILE: Define upstream config file to persist servers information from consul server, this config file will be updated
 # automatically once any service status changes or after LONG_POLLING_INTERVAL time
-UPSTREAM_FILE = "/home/easemob/apps/config/nginx/conf.d/dyups.upstream.kefu.eaemob.com.conf"
+UPSTREAM_FILE = "/home/dyups/apps/config/nginx/conf.d/dyups.upstream.com.conf"
 
 # KEEPALIVE_CONN_NUM: Define keepalive value for synced service in UPSTREAM_FILE
 KEEPALIVE_CONN_NUM = "20"
