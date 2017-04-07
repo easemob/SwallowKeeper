@@ -94,8 +94,9 @@ This solution can apply to not just java language, also apply to python, ruby, p
  * Check the test upsteam in nginx
 
    $ curl localhost:8081/detail
-   test
-   server 192.168.42.2:80
+
+     test
+     server 192.168.42.2:80
 
    The service ip 192.168.42.2 and port 80 is what we registerd with above curl
    command, and it's working ok. 
