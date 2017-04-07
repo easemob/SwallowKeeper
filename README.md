@@ -68,3 +68,36 @@ This solution can apply to not just java language, also apply to python, ruby, p
   5. Run script update_nginx_upstream.py with supervisor
  
   ```
+
+## Demo
+
+ * Start consul with web ui
+
+   docker run --name consul_test -d -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h
+   node1 progrium/consul -server -bootstrap -ui-dir /ui
+
+   Note: access http://<ip>:8500/ui to check the services
+
+ * Start tengine with dyups and update_nginx_consul script
+
+   cd demo && docker build -t easemob/swallowkeeper .
+
+   sudo docker run -d --name dyups_consul_test  --link consul_test:consul_test
+   -p 80:80 -p 443 -p 8081:8081 easemob/swallowkeeper
+  
+ * Register a fake 80 http service to test service 
+
+    curl -X POST 127.0.0.1:8500/v1/agent/service/register -d
+    '{"ID":"1234","Name":"test","Tags":["slave"],"Port":80,"check":{"script":
+    "echo 0", "interval": "10s"}}'
+
+ * Check the test upsteam in nginx
+
+   $ curl localhost:8081/detail
+   test
+   server 192.168.42.2:80
+
+   The service ip 192.168.42.2 and port 80 is what we registerd with above curl
+   command, and it's working ok. 
+
+   Please feel free to try.
