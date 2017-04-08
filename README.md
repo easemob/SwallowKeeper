@@ -77,8 +77,7 @@ This solution can apply to not just java language, also apply to python, ruby, p
      Our springboot mirco service implements the service registration in code,
      when the app starts, it will register the service information into consul.
 
-     For test, you can use curl to register, you can have a try with demo
-     example.
+     For test, you can use curl to register, please find the example in below demo.
  
   ```
 
