@@ -63,9 +63,22 @@ This solution can apply to not just java language, also apply to python, ruby, p
          #UPSTREAM_FILE: Define upstream config file to persist servers information from consul server, this config file will be updated
          # automatically once any service status changes or after LONG_POLLING_INTERVAL time
         UPSTREAM_FILE = "/home/dyups/apps/config/nginx/conf.d/dyups.upstream.com.conf"
+        # MIN_CONSUL_SERVICE_NUM: Define a service count threshold in case of any consul server crash, if the live upstream
+        # count is less than MIN_CONSUL_SERVICE_NUM, it will not sync the consul services into nginx and nginx will use the old upstreams. We set
+        it as 30 in production, you can set it as 0 in demo.
+        MIN_CONSUL_SERVICE_NUM = 30
         
         
   5. Run script update_nginx_upstream.py with supervisor
+
+
+  6. Register service information (ip, port, health check etc) into consul
+
+     Our springboot mirco service implements the service registration in code,
+     when the app starts, it will register the service information into consul.
+
+     For test, you can use curl to register, you can have a try with demo
+     example.
  
   ```
 
@@ -99,7 +112,11 @@ This solution can apply to not just java language, also apply to python, ruby, p
 
      server 192.168.42.2:80
 
-   The service ip 192.168.42.2 and port 80 is what we registerd with above curl
-   command, and it's working ok. 
+   The service ip 192.168.42.2 and port 80 is what we registerd with above
+   register http api, and you will see it from the output `curl
+   localhost:8081/detail. If you register multiple service for test, it will
+   show multiple servers under test upstream. 
+   
+   (Note: upstream name should be same with the service name in consul)`  
 
-   Please feel free to try.
+   Please feel free to try it.
